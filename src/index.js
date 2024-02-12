@@ -171,7 +171,7 @@ app.post('/admin/edit/:name', async (req, res) => {
             const existingUser = await User.findOne({name: req.body.name}) // check the new username
             if (existingUser) {
                 return res.send("User already exists. Please choose another username.");
-               // res.redirect('/admin/edit/:name')
+
             }
         }
 
