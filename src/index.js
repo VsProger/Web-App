@@ -32,7 +32,7 @@ app.get("/", (req,res)=>{
     res.render('home', {
         weatherImage: 'pictures/rain.png',
         apodImage: 'pictures/space.png',
-        newsImage: 'pictures/news(1).png',
+        newsImage: 'pictures/News(1).png',
     });
 })
 
