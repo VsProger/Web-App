@@ -1,0 +1,77 @@
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f2f2f2;
+    line-height: 1.6;
+}
+
+header {
+    background-color: #333;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+}
+
+main {
+    padding: 2rem;
+}
+
+.button-group {
+    display: flex;
+    justify-content: space-between;
+}
+
+.button-group a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between; /* Added */
+    background-color: #444;
+    color: white;
+    padding: 1rem;
+    border-radius: 0.5rem;
+    text-decoration: none;
+    transition: transform 0.2s ease-in-out;
+    height: 300px;
+}
+
+.button-group a:hover {
+    transform: translateY(-5px);
+}
+
+.button-group img {
+    width: 350px;
+    height: auto;
+    object-fit: cover;
+    border-radius: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.button-group h2 {
+    margin: 0;
+    margin-top: 0.5rem;
+}
+
+/* Additional CSS to ensure text is at the bottom */
+.button-group a h2 {
+    margin-top: auto; /* Pushes the h2 to the bottom */
+}
+
+
+.navbar {
+    overflow: hidden;
+    background-color: #333;
+}
+
+.navbar a {
+    float: left;
+    display: block;
+    color: white;
+    text-align: center;
+    padding: 14px 16px;
+    text-decoration: none;
+}
+
+.navbar a:hover {
+    background-color: #ddd;
+    color: black;
+}

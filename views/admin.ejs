@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+    <link rel="stylesheet" href="/admin.css">
+    <!-- Include any additional CSS/JS here -->
+</head>
+<body>
+<div class="navbar">
+    <a href="/">Home</a>
+    <a href="/weather">Weather</a>
+    <a href="/apod">Astronomy Picture of the Day</a>
+    <a href="/news">News</a>
+</div>
+<h1>Admin Dashboard</h1>
+
+<!-- User Management Section -->
+<h2>User Management</h2>
+
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Password</th>
+        <th>Created Date</th>
+        <th>Updated Date</th>
+        <th>Admin</th>
+        <th>Actions</th>
+    </tr>
+    <% users.forEach(user => { %>
+        <tr>
+            <td><%= user.name %></td>
+            <td><%= user.password %></td>
+            <td><%= user.createdDate.toDateString() %></td>
+            <td><%= user.updatedDate.toDateString() %></td>
+            <td><%= user.isAdmin ? 'Yes' : 'No' %></td>
+            <td>
+                <!-- Edit and Delete Links -->
+                <a href="/admin/edit/<%= user.name %>">Edit</a>
+                <a href="/admin/delete/<%= user.name %>">Delete</a>
+            </td>
+        </tr>
+    <% }) %>
+</table>
+
+<!-- Link to Add New User -->
+<a href="/admin/new">Add New User</a>
+
+<!-- Deleted Users Section -->
+<h2>Deleted Users</h2>
+
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Created Date</th>
+        <th>Deletion Date</th>
+    </tr>
+    <% deletedUsers.forEach(dUser => { %>
+        <tr>
+            <td><%= dUser.name %></td>
+            <td><%= dUser.createdDate.toDateString() %></td>
+            <td><%= dUser.deletionDate.toDateString() %></td>
+        </tr>
+    <% }) %>
+</table>
+
+</body>
+</html>
