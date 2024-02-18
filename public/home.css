@@ -11,6 +11,17 @@ header {
     text-align: center;
 }
 
+footer {
+    background-color: #333;
+    color: white;
+    padding: 1rem;
+    text-align: center;
+    clear: both;
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+}
+
 main {
     padding: 2rem;
 }
@@ -51,9 +62,9 @@ main {
     margin-top: 0.5rem;
 }
 
-/* Additional CSS to ensure text is at the bottom */
+
 .button-group a h2 {
-    margin-top: auto; /* Pushes the h2 to the bottom */
+    margin-top: auto;
 }
 
 

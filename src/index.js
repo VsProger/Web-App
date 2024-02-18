@@ -137,6 +137,7 @@ app.get('/history', async (req, res)=>{
 app.get('/apod', async (req, res) => {
     const apiKey = process.env.APOD_API_KEY
     const url = `https://api.nasa.gov/planetary/apod?api_key=${apiKey}`;
+
     try {
         const response = await axios.get(url);
         res.render('apod', {  apodData: response.data });

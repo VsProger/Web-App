@@ -44,7 +44,7 @@ a:hover {
     text-decoration: underline;
 }
 
-/* Add New User Link Styles */
+
 a[href='/admin/new'] {
     display: inline-block;
     margin-top: 20px;
