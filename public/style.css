@@ -43,6 +43,19 @@ h2 {
     border-radius: 3px;
 }
 
+
+
+.translate{
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: none;
+    overflow: hidden;
+    margin-left: 12px;
+    padding: auto;
+}
+
 .submit-btn {
     display: block;
     width: 100%;

@@ -8,42 +8,45 @@
 <body>
 
     <div class="navbar">
-        <a href="/">Home</a>
+        <a href="/"><%= t('home')%></a>
+        <a href="/music"><%= t('music')%></a>
+        <a href="/artist"><%= t('artists')%></a>
+
     <% if (loggeduser.isAdmin) { %>
-        <a href="/admin" class="admin-button">Admin Panel</a>
+        <a href="/admin" class="admin-button"><%= t('adminPanel')%></a>
     <% } %>
         
         <div class="navbar-right">
             <form action="/logout" method="POST">
-                <button type="submit" class="logout-button">Logout</button>
+                <button type="submit" class="logout-button"><%= t('logout')%></button>
             </form>
         </div>
         
     </div>
+    <div class="translate">
+        <a href="/change-lang/kz"><img src="/pictures/kz.jpg" alt="kzflag" width="40px" height="30px"></a>
+        <a href="/change-lang/en"><img src="/pictures/britain.png" alt="enflag" width="40px" height="30px"></a>
+        <a href="/change-lang/ru"><img src="/pictures/russia.png" alt="ruflag" width="40px" height="30px"></a>
+    </div>
 
     <div class="container">
-        <h1>Edit Post</h1>
-        
-
+        <h1><%= t('editPost')%></h1>
         <form action="/editPost/<%= post.id %>?_method=PUT" method="POST" enctype="multipart/form-data" style="display: inline;">
-        
-
-
             <div>
-                <label for="images">Upload Images:</label>
+                <label for="images"><%= t('uploadImgs')%>:</label>
                 <input type="file" name="images" id="images" multiple>
             </div>
 
             <div>
-                <label for="postName">Post Name:</label>
+                <label for="postName"><%= t('postName')%></label>
                 <input type="text" name="postName" id="postName" value="<%= post.name %>" required>
             </div>
 
             <div>
-                <label for="description">Description:</label>
+                <label for="description"><%= t('description')%></label>
                 <textarea name="description" id="description" rows="4" required><%= post.description %></textarea>
             </div>
-            <button type="submit" class="edit-post-button">Update Post</button>
+            <button type="submit" class="edit-post-button"><%= t('editPost')%></button>
         </form>
     </div>
 

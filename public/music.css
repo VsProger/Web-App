@@ -16,6 +16,18 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.translate{
+    position: absolute;
+    top: 80px;
+    right: 20px;
+    background: none;
+    border: none;
+    overflow: hidden;
+    margin-left: 12px;
+    padding: auto;
+}
+
+
 input[type="text"] {
     width: calc(100% - 120px);
     padding: 10px;

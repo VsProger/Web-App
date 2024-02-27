@@ -16,28 +16,34 @@
 <body>
 
     <div class="navbar">
-        <a href="/">Home</a>
-        <a href="/music">Music</a>
-        <a href="/artist">Artists</a>
+        <a href="/"><%= t('home')%></a>
+        <a href="/music"><%= t('music')%></a>
+        <a href="/artist"><%= t('artists')%></a>
+
     <% if (loggeduser.isAdmin) { %>
-        <a href="/admin" class="admin-button">Admin Panel</a>
+        <a href="/admin" class="admin-button"><%= t('adminPanel')%></a>
     <% } %>
         
         <div class="navbar-right">
             <form action="/logout" method="POST">
-                <button type="submit" class="logout-button">Logout</button>
+                <button type="submit" class="logout-button"><%= t('logout')%></button>
             </form>
         </div>
         
+    </div>
+    <div class="translate">
+        <a href="/change-lang/kz"><img src="/pictures/kz.jpg" alt="kzflag" width="40px" height="30px"></a>
+        <a href="/change-lang/en"><img src="/pictures/britain.png" alt="enflag" width="40px" height="30px"></a>
+        <a href="/change-lang/ru"><img src="/pictures/russia.png" alt="ruflag" width="40px" height="30px"></a>
     </div>
 <main>
     <% if (loggeduser.isAdmin) { %>
     <div class="button-group">
         <!-- Add New Post button -->
-        <button class="new-post-button" onclick="location.href='/newpost'">Add New Post</button>
+        <button class="new-post-button" onclick="location.href='/newpost'"><%= t('addNewPost')%></button>
     </div>
     <% } %>
-
+    
     <div class="container">
         <div class="row">
              <% posts.forEach(function(post){ %>
@@ -62,23 +68,23 @@
             </div>
             <h2><%= post.name %></h2>
             <p><%= post.description %></p>
-            <!-- <% if (post.updatedAt) { %>
-                <p>Created at: <%= post.updatedAt %></p>
-            <% } else { %>
-                <p>Updated at: <%= post.createdAt %></p>
-            <% }  %> -->
+            
+            <p><%= t('createdAt')%> <%= post.createdAt %></p>
+            
+            <p><%= t('updatedAt')%> <%= post.updatedAt %></p>
+            
             <% if (loggeduser.isAdmin) { %>
                 <div class="button-group" style="display: inline-block;">
                     <form action="/editPost/<%= post.id %>" method="GET" style="display: inline;">
                    
                         <!-- Edit Post button -->
-                        <button type="submit" class="delete-button">Edit</button>
+                        <button type="submit" class="delete-button"><%= t('edit')%></button>
                     </form>
                 </div>
                 <div class="button-group" style="display: inline-block;">
                     <form action="/deletePost/<%= post.id %>?_method=DELETE" method="POST" style="display: inline;">
                     <!-- Delete Post button -->
-                    <button type="submit" class="delete-button">Delete</button>
+                    <button type="submit" class="delete-button"><%= t('delete')%></button>
                     </form>
                 </div>
                 <% } %>
@@ -94,7 +100,7 @@
 </main>
 
 <footer>
-    <p>Created by: Saliyev Baurzhan Se-2204</p>
+    <p><%= t('createdBy')%></p>
 </footer>
 
 </body>

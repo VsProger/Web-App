@@ -6,6 +6,11 @@ const multer  = require('multer'); // Для обработки загружен
 const MongoDbSession = require("connect-mongodb-session")(session);
 const mongoose = require('mongoose');
 const bodyParser = require('body-parser');
+
+const i18next = require('i18next');
+const middleware = require('i18next-http-middleware');
+const Backend = require('i18next-node-fs-backend');
+
 const fs = require('fs');
 const path = require('path');
 
@@ -13,6 +18,7 @@ const util = require('util');
 const unlinkAsync = util.promisify(fs.unlink);
 
 const methodOverride = require('method-override');
+const app = express();
 
 // After initializing your Express app
 
@@ -32,6 +38,28 @@ const store = new MongoDbSession({
 });
 
 
+i18next
+    .use(Backend)
+    .use(middleware.LanguageDetector)
+    .init({
+        fallbackLng: 'en',
+        preload: ['en', 'ru'],
+        backend: {
+            loadPath: __dirname + '/locales/{{lng}}.json',
+        },
+        detection: {
+            order: ['session', 'querystring', 'cookie'],
+            caches: ['cookie'],
+            lookupSession: 'lang',
+            lookupQuerystring: 'lang',
+            lookupCookie: 'i18next',
+            cookieMinutes: 10,
+            cookieDomain: 'myDomain'
+        },
+    });
+
+
+
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         cb(null, './uploads');
@@ -48,7 +76,7 @@ const loggeduser = {
     isAdmin: null
 }
 
-const app = express();
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.set('view engine', 'ejs');
@@ -63,6 +91,14 @@ app.use(session({
     saveUninitialized: false,
     store: store,
 }));
+
+app.use(middleware.handle(i18next));
+app.use((req, res, next) => {
+    let lang = req.session.lang || 'en';
+    console.log(lang)
+    req.i18n.changeLanguage(lang);
+    next();
+});
 
 const isAuth = (req, res, next) => {
     if (req.session.isAuth) {
@@ -80,12 +116,15 @@ const isAuthAdmin = (req, res, next) => {
     }
 }
 
+
+
+
 app.get("/login", (req,res) =>{
     res.render("login")
 })
 
 app.get("/signup", (req,res) =>{
-    res.render("signup")
+    res.render("signup", {t: req.t})
 })
 
 function formatDate(date) {
@@ -104,7 +143,7 @@ app.get("/",isAuth, async (req,res)=>{
 
 
 
-app.get('/editPost/:id', async (req, res) => {
+app.get('/editPost/:id',isAuth, async (req, res) => {
     try {
         const id = req.params.id;
         const post = await Post.findById(id);
@@ -173,7 +212,7 @@ app.get('/admin/edit/:name',isAuthAdmin, async (req, res) => {
     }
 });
 
-app.get('/music', (req, res) => {
+app.get('/music',isAuth, (req, res) => {
     res.render('search', { tracks: [], loggeduser});
 });
 
@@ -188,11 +227,11 @@ app.get('/music-search', async (req, res) => {
     }
 });
 
-app.get('/artist', (req, res) => {
+app.get('/artist',isAuth, (req, res) => {
     res.render('artists', { artists: [], loggeduser});
 });
 
-app.get('/artist-result', async (req, res) => {
+app.get('/artist-result',isAuth, async (req, res) => {
     try {
         const searchTerm = req.query.artist;
         const authResponse = await axios.post('https://accounts.spotify.com/api/token', null, {
@@ -218,7 +257,7 @@ app.get('/artist-result', async (req, res) => {
 });
 
 
-app.get('/newpost', (req, res) => {
+app.get('/newpost', isAuth,(req, res) => {
     res.render('newpost', {loggeduser});
 });
 app.post('/newpost', upload.array('images', 3), async (req, res) => {
@@ -250,7 +289,7 @@ app.post('/newpost', upload.array('images', 3), async (req, res) => {
 
 
 // DELETE route to delete a post
-app.delete('/deletePost/:id', async (req, res) => {
+app.delete('/deletePost/:id',isAuth, async (req, res) => {
     try {
         const id = req.params.id;
         await Post.findByIdAndDelete(id);
@@ -429,6 +468,26 @@ app.post('/logout', (req, res) => {
     });
     
 });
+
+
+
+app.get('/change-lang/:lang', (req, res) => {
+    const selectedLang = req.params.lang;
+    console.log("Changing language to:", selectedLang); // Added logging
+    req.session.lang = selectedLang;
+    req.i18n.changeLanguage(selectedLang, (err) => {
+        if (err) {
+            console.error('Error changing language:', err);
+            return res.status(500).send('Error changing language');
+        }
+
+        req.session.save(() => {
+            const referrer = req.get('Referrer') || '/'
+            res.redirect(referrer);
+        });
+    });
+});
+
 
 app.use((req, res, next) => {
     // res.status(404).send("Page Not Found");
