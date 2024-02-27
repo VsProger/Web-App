@@ -420,12 +420,7 @@ app.post("/login", async (req,res)=>{
 
 
 
-// app.use((req, res, next) => {
-//     // res.status(404).send("Page Not Found");
-//     const ErrorCode = 404
-//     const ErrorMsg = "Page Not Found"
-//     res.render("error", {ErrorCode, ErrorMsg });
-// });
+
 
 app.post('/logout', (req, res) => {
     req.session.destroy(err => {
@@ -433,6 +428,13 @@ app.post('/logout', (req, res) => {
         res.redirect('/login');
     });
     
+});
+
+app.use((req, res, next) => {
+    // res.status(404).send("Page Not Found");
+    const ErrorCode = 404
+    const ErrorMsg = "Page Not Found"
+    res.render("error", {ErrorCode, ErrorMsg });
 });
 
 const port = 3000
