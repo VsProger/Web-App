@@ -1,24 +1,84 @@
-const express = require('express')
-const axios = require('axios')
-const pasth = require("path")
-const bcrypt = require("bcrypt")
-const { User, DeletedUser, History } = require('./config');
+const express = require('express');
+const axios = require('axios');
+const bcrypt = require("bcrypt");
+const session = require("express-session");
+const multer  = require('multer'); // Для обработки загруженных файлов
+const MongoDbSession = require("connect-mongodb-session")(session);
+const mongoose = require('mongoose');
+const bodyParser = require('body-parser');
+const fs = require('fs');
+const path = require('path');
+
+const util = require('util');
+const unlinkAsync = util.promisify(fs.unlink);
+
+const methodOverride = require('method-override');
+
+// After initializing your Express app
+
+const { User, DeletedUser, Post } = require('./config');
 require('dotenv').config();
 
+mongoose.connect(process.env.DB_CONNECTION_LINK, { 
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    useCreateIndex: true
+})
+.then(() => console.log('Connected to MongoDB'))
 
-const app = express()
-
-//convert data into json format
-app.use(express.json())
-app.use(express.urlencoded({extended: false}))
-
-//use ejs as the view engine
-app.set('view engine', 'ejs')
-
-//static file
-app.use(express.static("public"))
+const store = new MongoDbSession({
+    uri: process.env.MONGO_URI,
+    collection: 'sessions'
+});
 
 
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        cb(null, './uploads');
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname);
+    }
+});
+
+const upload = multer({ storage });
+
+const loggeduser = {
+    name: "",
+    isAdmin: null
+}
+
+const app = express();
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.set('view engine', 'ejs');
+app.use(express.static("public"));
+app.use('/uploads', express.static('uploads'));
+app.use(methodOverride('_method'));
+
+
+app.use(session({
+    secret: 'thisismysecretdonttellanyone',
+    resave: false,
+    saveUninitialized: false,
+    store: store,
+}));
+
+const isAuth = (req, res, next) => {
+    if (req.session.isAuth) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
+}
+
+const isAuthAdmin = (req, res, next) => {
+    if (req.session.isAuthAdmin) {
+        next();
+    } else {
+        res.redirect('/login');
+    }
+}
 
 app.get("/login", (req,res) =>{
     res.render("login")
@@ -28,33 +88,52 @@ app.get("/signup", (req,res) =>{
     res.render("signup")
 })
 
-app.get("/", (req,res)=>{
-    res.render('home', {
-        weatherImage: 'pictures/rain.png',
-        apodImage: 'pictures/space.png',
-        newsImage: 'pictures/News(1).png',
-    });
-})
+function formatDate(date) {
+    let d = new Date(date);
+    let day = ('0' + d.getDate()).slice(-2);
+    let month = ('0' + (d.getMonth() + 1)).slice(-2);
+    let year = d.getFullYear();
+    return `${day}.${month}.${year}`;
+}
 
+
+app.get("/",isAuth, async (req,res)=>{
+    posts = await Post.find()
+    res.render('home', {loggeduser, posts, formatDate});
+    });
+
+
+
+app.get('/editPost/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        const post = await Post.findById(id);
+        console.log(post);
+        res.render('editPost', { post, loggeduser });
+        } catch (error) {
+            res.status(500).send('Error editing post: ' + error.message);
+        }
+});
+    
 
 //admin page
-app.get('/admin', async (req, res) => {
+app.get('/admin',isAuthAdmin, async (req, res) => {
     try {
         const users = await User.find()
         const deletedUsers = await DeletedUser.find()
-        res.render('admin', { users, deletedUsers });
+        res.render('admin', { users, deletedUsers, loggeduser});
     } catch (error) {
         res.status(500).send("Internal Server Error");
     }
 });
 
 //add new user
-app.get('/admin/new', (req,res) =>{
+app.get('/admin/new',isAuthAdmin, (req,res) =>{
     res.render("addNewUser")
 })
 
 //delete user
-app.get('/admin/delete/:name', async (req, res) => {
+app.get('/admin/delete/:name',isAuthAdmin, async (req, res) => {
     try {
         // Find the user by ID
         const userForDelete = await User.findOne({name: req.params.name});
@@ -80,7 +159,7 @@ app.get('/admin/delete/:name', async (req, res) => {
     }
 });
 
-app.get('/admin/edit/:name', async (req, res) => {
+app.get('/admin/edit/:name',isAuthAdmin, async (req, res) => {
     try {
         const user = await User.findOne({name: req.params.name});
         if (!user) {
@@ -94,74 +173,134 @@ app.get('/admin/edit/:name', async (req, res) => {
     }
 });
 
-
-// Handle the /weather route
-app.get("/weather", async (req, res) => {
-    // Get the city from the query parameters
-    const city = req.query.city;
-    const apiKey = process.env.OPEN_WEATHER_API_KEY;
-    const data = {
-        city: city,
-        weather: "",
-        temperature: ""
-    }
-
-    // Add your logic here to fetch weather data from the API
-    const APIUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=imperial&appid=${apiKey}`;
-    let weather;
-    let error = null;
-    try {
-        const response = await axios.get(APIUrl);
-        weather = response.data;
-        data.weather = weather.weather[0].main
-        data.temperature = weather.main.temp
-        await History.insertMany(data)
-    } catch  {
-        weather = null;
-        error = "Error, Please try again";
-    }
-    // Render the index template with the weather data and error message
-    res.render("weather", { weather, error });
+app.get('/music', (req, res) => {
+    res.render('search', { tracks: [], loggeduser});
 });
 
-app.get('/history', async (req, res)=>{
+app.get('/music-search', async (req, res) => {
     try {
-        const histories = await History.find()
+        const trackName = req.query.track;
+        const response = await axios.get(`https://api.deezer.com/search?q=${trackName}&apikey=${process.env.DEZEER_API_KEY}`);
 
-        res.render('history', { histories });
+        res.render('search', { tracks: response.data.data, loggeduser});
     } catch (error) {
-        res.status(500).send("Internal Server Error");
+        res.send('Error occurred');
     }
-})
+});
 
-app.get('/apod', async (req, res) => {
-    const apiKey = process.env.APOD_API_KEY
-    const url = `https://api.nasa.gov/planetary/apod?api_key=${apiKey}`;
+app.get('/artist', (req, res) => {
+    res.render('artists', { artists: [], loggeduser});
+});
 
+app.get('/artist-result', async (req, res) => {
     try {
-        const response = await axios.get(url);
-        res.render('apod', {  apodData: response.data });
+        const searchTerm = req.query.artist;
+        const authResponse = await axios.post('https://accounts.spotify.com/api/token', null, {
+            params: {
+                grant_type: 'client_credentials'
+            },
+            headers: {
+                Authorization: `Basic ${Buffer.from(`${process.env.CLIENT_ID}:${process.env.CLIENT_SECRET}`).toString('base64')}`
+            }
+        });
+        const accessToken = authResponse.data.access_token;
+        
+        const response = await axios.get(`https://api.spotify.com/v1/search?q=${searchTerm}&type=artist`, {
+            headers: {
+                Authorization: `Bearer ${accessToken}`,
+            },
+        });
+        res.render('artists', { artists: response.data.artists.items, loggeduser});
     } catch (error) {
-        res.render('apod', {  apodData: {} });
+        console.error(error);
+        res.send('Error occurred');
     }
 });
 
 
-
-app.get('/news', async (req, res) => {
-    const apiKey = process.env.NEWS_API_KEY
-    const url = `https://newsapi.org/v2/everything?q=cryptocurrency&apiKey=${apiKey}`
+app.get('/newpost', (req, res) => {
+    res.render('newpost', {loggeduser});
+});
+app.post('/newpost', upload.array('images', 3), async (req, res) => {
     try {
-        const response = await axios.get(url);
-        res.render('news', {  newsData: response.data });
-    } catch (error) {
-        res.render('news', {  newsData: {} });
+        // Extract paths to the uploaded images
+        const pathsToImages = req.files.map(file => file.path);
+
+        // Create a new post instance based on the schema
+        const newPost = new Post({
+            images: pathsToImages,
+            name: req.body.postName,
+            description: req.body.description,
+            createdAt: new Date(),
+        });
+
+        // Save the post to the database
+        const savedPost = await newPost.save();
+
+        // Send a successful response
+        // res.status(201).send(savedPost);
+        res.redirect('/');
+    } catch (err) {
+        // Handle errors when saving the post
+        console.error('Failed to create new post:', err);
+        res.status(500).send('Failed to create new post');
     }
 });
 
+
+
+// DELETE route to delete a post
+app.delete('/deletePost/:id', async (req, res) => {
+    try {
+        const id = req.params.id;
+        await Post.findByIdAndDelete(id);
+        res.redirect('/');
+    } catch (error) {
+        res.status(500).send('Error deleting post: ' + error.message);
+    }
+});
+
+// PUT route to update a post
+app.put('/editPost/:id', upload.array('images', 3), async (req, res) => {
+    try {
+        const post = await Post.findById(req.params.id);
+        if (!post) {
+            return res.status(404).send('Post not found');
+        }
+
+        // Delete existing images
+        if (post.images && post.images.length > 0) {
+            await Promise.all(post.images.map(async (imagePath) => {
+                try {
+                    await unlinkAsync(imagePath);
+                } catch (error) {
+                    console.error('Error deleting image:', error);
+                }
+            }));
+        }
+
+        // Update post details
+        const updatedData = req.body;
+        post.updatedAt = new Date();
+        post.name = updatedData.postName;
+        post.description = updatedData.description;
+
+        // Add new images
+        if (req.files && req.files.length > 0) {
+            post.images = req.files.map(file => file.path);
+        } else {
+            post.images = []; // Clear images if no new files are uploaded
+        }
+
+        await post.save();
+        res.redirect('/');
+    } catch (error) {
+        res.status(500).send('Error updating post: ' + error.message);
+    }
+});
 
 // Route to handle the edit form submission
-app.post('/admin/edit/:name', async (req, res) => {
+app.post('/admin/edit/:name',isAuthAdmin, async (req, res) => {
     try {
         // const { name, password, isAdmin } = req.body;
         let user = await User.findOne({name: req.params.name}); // search user
@@ -207,13 +346,14 @@ app.post("/signup", async (req,res)=>{
     //check if the user already exists
     const existingUser = await User.findOne({name: data.name})
     if (existingUser){
-        res.send("User already exists. Please choose another username.");
+        return res.send("User already exists. Please choose another username.");
     }else{
         // hash the password by using bcrypt
-        const saltRounds = 10
-        const hashedPassword = await bcrypt.hash(data.password, saltRounds)
+        
+        const hashedPassword = await bcrypt.hash(data.password, 10)
         data.password = hashedPassword  // replace passwords
         const userData = await User.insertMany(data)
+        // await data.save()
         console.log(userData)
         // place to redirect a user to login page
         res.redirect("/login");
@@ -221,7 +361,7 @@ app.post("/signup", async (req,res)=>{
 
 })
 
-app.post('/admin/new', async (req,res)=>{
+app.post('/admin/new',isAuthAdmin, async (req,res)=>{
 
     const data = {
         name: req.body.username,
@@ -250,33 +390,49 @@ app.post('/admin/new', async (req,res)=>{
 
 app.post("/login", async (req,res)=>{
     try {
-        const check = await User.findOne({name: req.body.username})
-        if(!check){
-            res.send("Wrong username")
+        const user = await User.findOne({name: req.body.username})
+        if(!user){
+            res.send("Wrong username");
+            return;
         }
 
-        const isPasswordMatch = await bcrypt.compare(req.body.password, check.password)
+        const isPasswordMatch = await bcrypt.compare(req.body.password, user.password);
         if(isPasswordMatch){
-            if (check.isAdmin){
-                res.redirect('/admin')
-            }else{
-                res.redirect('/home')
-            }
+          
+            loggeduser.name = user.name;
+            loggeduser.isAdmin = user.isAdmin;
+            req.session.isAuth = true;
 
-        }else{
-            res.send("wrong password")
+            if (user.isAdmin){
+                req.session.isAuthAdmin = true;
+                res.redirect('/');
+            } else {
+                res.redirect('/');
+            }
+        } else {
+            res.send("Wrong password");
         }
     } catch (error) {
         console.error("Error occurred:", error);
-        res.send("wrong Details")
+        res.send("Login Error");
     }
-})
+});
 
-app.use((req, res, next) => {
-    // res.status(404).send("Page Not Found");
-    const ErrorCode = 404
-    const ErrorMsg = "Page Not Found"
-    res.render("error", {ErrorCode, ErrorMsg });
+
+
+// app.use((req, res, next) => {
+//     // res.status(404).send("Page Not Found");
+//     const ErrorCode = 404
+//     const ErrorMsg = "Page Not Found"
+//     res.render("error", {ErrorCode, ErrorMsg });
+// });
+
+app.post('/logout', (req, res) => {
+    req.session.destroy(err => {
+        if (err) throw err;
+        res.redirect('/login');
+    });
+    
 });
 
 const port = 3000

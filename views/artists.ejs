@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spotify Artist Search</title>
+    <link rel="stylesheet" type="text/css" href="/artists.css">
+</head>
+<body>
+    <div class="navbar">
+        <a href="/">Home</a>
+        <a href="/music">Music</a>
+        <a href="/artist">Artists</a>
+
+    <% if (loggeduser.isAdmin) { %>
+        <a href="/admin" class="admin-button">Admin Panel</a>
+    <% } %>
+        
+        <div class="navbar-right">
+            <form action="/logout" method="POST">
+                <button type="submit" class="logout-button">Logout</button>
+            </form>
+        </div>
+        
+    </div>
+    <form action="/artist-result" method="GET" class="search-form">
+        <input type="text" name="artist" placeholder="Enter artist name" class="search-input">
+        <button type="submit" class="search-button">Search</button>
+    </form>
+    <h1 class="search-results-heading">Search Results</h1>
+    <ul class="artist-list">
+        <% artists.forEach(artist => { %>
+            <li class="artist-item">
+                <h2 class="artist-name"><%= artist.name %></h2>
+                <p class="artist-followers">Followers: <%= artist.followers.total %></p>
+                <p class="artist-genres">Genres: <%= artist.genres.join(', ') %></p>
+                <p class="artist-popularity">Popularity: <%= artist.popularity %></p>
+                <p class="artist-uri">Spotify URI: <%= artist.uri %></p>
+                <p class="artist-profile-link"><a href="<%= artist.external_urls.spotify %>" class="profile-link">Spotify Profile</a></p>
+                <% if(artist.images && artist.images.length > 0) { %>
+                    <img src="<%= artist.images[0].url %>" alt="<%= artist.name %> Image" class="artist-image">
+                <% } else { %>
+                    <p>No image available</p>
+                <% } %>
+            </li>
+        <% }); %>
+    </ul>
+</body>
+</html>

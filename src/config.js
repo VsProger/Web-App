@@ -48,28 +48,41 @@ const deletedSchema = new mongoose.Schema({
     }
 
 })
-
-const historySchema = new mongoose.Schema({
-    city: {
+const postShema = new mongoose.Schema({
+    images: {
+        type: [String],
+        required: true
+    },
+   
+    
+    name: {
         type: String,
         required: true
     },
-    weather: {
+    description: {
         type: String,
         required: true
     },
-    temperature:{
-        type: String,
+    createdAt: {
+        type: Date,
         required: true
+    },
+    updatedAt: {
+        type: Date,
+        required: false
+    },
+    deletedAt: {
+        type: Date,
+        required: false
     }
 })
 
 //collection part
 const collection = new mongoose.model("users", LoginSchema)
 const collection2 = new mongoose.model("deletedUsers", deletedSchema)
-const collection3 = new mongoose.model("history", historySchema)
+const collection3 = new mongoose.model("posts", postShema)
 module.exports = {
     User: collection,
     DeletedUser: collection2,
-    History: collection3
+    Post: collection3,
 };
