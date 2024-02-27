@@ -27,7 +27,7 @@ mongoose.connect(process.env.DB_CONNECTION_LINK, {
 .then(() => console.log('Connected to MongoDB'))
 
 const store = new MongoDbSession({
-    uri: process.env.MONGO_URI,
+    uri: process.env.DB_CONNECTION_LINK,
     collection: 'sessions'
 });
 
