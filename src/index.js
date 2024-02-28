@@ -138,6 +138,8 @@ function formatDate(date) {
 
 app.get("/",isAuth, async (req,res)=>{
     posts = await Post.find()
+
+    console.log(req.sessions)
     res.render('home', {loggeduser, posts, formatDate});
     });
 
@@ -437,7 +439,7 @@ app.post("/login", async (req,res)=>{
 
         const isPasswordMatch = await bcrypt.compare(req.body.password, user.password);
         if(isPasswordMatch){
-          
+
             loggeduser.name = user.name;
             loggeduser.isAdmin = user.isAdmin;
             req.session.isAuth = true;
