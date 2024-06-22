@@ -1,4 +1,7 @@
-# Assignment 4 and FINAL
+# Web-Music
+
+## Description
+This is a simple web application that allows you to listen music and view artists. The application has two roles: user and admin. The user can view the music and artists, and the admin can add new posts, users and edit them. The application uses the following technologies: Node.js, Express.js, MongoDB, Mongoose, EJS, and Bootstrap. 
 
 ## Instructions 
 1. Clone the repository
@@ -28,6 +31,4 @@ http://localhost:3000/admin
 ```
 And other endpoints on the main page
 
-## Description
 
-This is a simple web application that allows you to listen music and view artists. The application has two roles: user and admin. The user can view the music and artists, and the admin can add new posts, users and edit them. The application uses the following technologies: Node.js, Express.js, MongoDB, Mongoose, EJS, and Bootstrap. 
